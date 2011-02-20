@@ -1,0 +1,21 @@
+#! /bin/bash
+#|
+arc_dir="./ar";
+
+if [ "$1" = "--no-rl" ]; then
+    shift
+elif [ "$(type rlwrap)" ]; then
+    rl='rlwrap --complete-filenames --quote-character "\"" --remember --break-chars "[]()!:~\"" -C arc'
+fi
+
+exec $rl ./racket/bin/racket --no-init-file --repl --load "$0" ${1+"$@"}
+|#
+(current-directory "./ar")
+(require "ar/ac.scm" "ar/brackets.scm")
+(use-bracket-readtable)
+(aload "arc.arc")
+(aload "libs.arc")
+(current-directory "..")
+(aload "top-down.arc")
+#(arc-eval '(parse (lex (stdin)) rules))
+(tl)
