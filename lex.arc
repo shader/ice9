@@ -1,4 +1,4 @@
-(= literal '(if fi else do od fa af to proc end return forward var type break exit true false write writes read
+(= literal '(if fi else do od false fa af to proc end return forward var type break exit true writes write read
              |[]|
              ->
              |(|
@@ -32,7 +32,7 @@
 (def get-tok (s)
   (point return
     (each r literal
-          (if (headmatch string.r s)
+          (if (begins s string.r)
               (return list.r)))
     (each sp (tuples special 3)
 	  (aif (re-match sp.1 s)
