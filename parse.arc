@@ -175,7 +175,7 @@
   (aif (find caar.toks first!exp)
        ((case it
           id exp-id 
-          int int
+          int integer
           true true 
           false false 
           string str 
@@ -259,7 +259,7 @@
         (err:string "Type " typ " is not defined on line " l "."))))
 
 (def typearray (ast toks scope)
-  (let (dim toks scope) (chain (list nil toks scope) '|[| int '|]|)
+  (let (dim toks scope) (chain (list nil toks scope) '|[| integer '|]|)
     ((if (is caar.toks '|[|)
          typearray
          list)
@@ -346,7 +346,7 @@
             (parse-err ',typ toks))))
 
 (terminal id)
-(terminal int)
+(terminal integer int)
 (terminal str string)
 (terminal true)
 (terminal false)
