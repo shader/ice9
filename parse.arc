@@ -333,9 +333,17 @@
          list)
      (append ast d) toks scope)))
 
+(def forward (ast toks scope)
+  (let (((nil i) parms typ) toks scope) (chain (list nil toks scope) 'forward id '|(| declist '|)| proctype '|;|)
+       (list ast toks (cdr:defproc i parms typ scope))))
+
 (def proc (ast toks scope)
-  (let ((i parms typ body) toks scope) (chain (list nil toks scope) 'proc id '|(| declist '|)| proctype procbody 'end)
-       (list ast toks (defproc i parms typ scope))))
+  (withs ((((nil i) plist typ) toks scope)
+            (chain (list nil toks scope) 'proc id '|(| declist '|)| proctype)
+          parms (get-parms plist scope)
+          (body toks scope)
+            (chain (list nil toks (defproc i plist typ scope)) procbody 'end))
+    (list (append ast (list 'proc i typ parms body)) toks cdr.scope)))
 
 (def proctype (ast toks scope)
   (if (is caar.toks ':)
