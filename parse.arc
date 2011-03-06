@@ -84,6 +84,12 @@
             else))
        ast toks scope)))
 
+(def T (typ)
+  (fn (ast toks tp scope)
+      (if (iso tp typ)
+          (list ast toks typ scope)
+          (err:string "Expected expression of type " typ " but received " tp))))
+
 (def parse (s)
   (let toks lex.s
     (on-err [prn details._]
