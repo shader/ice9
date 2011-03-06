@@ -351,14 +351,16 @@
       (list (append ast nil) toks scope)))
 
 (def procbody (ast toks scope)
-  (if (~is caar.toks 'end)
+  (if (find caar.toks first!stm)
+      (stms ast toks scope)
+      (is caar.toks 'end)
+      (list ast toks scope)
       (let (ast toks scope)
         ((case caar.toks
            var vardef
            type typedef)
          ast toks scope)
-        (program ast toks scope))
-      (list ast toks scope)))
+        (procbody ast toks scope))))
 
 (def idlist (ast toks scope)
   (chain (list ast toks scope) (? '|,|) id (? '|,| idlist)))
