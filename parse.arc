@@ -280,7 +280,9 @@
              (let typ last.d
                (each var (rev:cdr:rev d)
                      (if acons.var
-                         (= (scope.0.0 var.1) typ)))))
+                         (if (scope.0.0 var.1)
+                             (err:string "Duplicate declaration: " var.1)
+                             (= (scope.0.0 var.1) typ))))))
        (list ast toks scope)))
 
 (def varlist (ast toks scope)
