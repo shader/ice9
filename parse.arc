@@ -165,12 +165,17 @@
   ('if exp '-> stms (? '|[]| if-rest) 'fi)
   if)
 
-(defnode fa
-  ('fa id ':= exp 'to exp '-> stms 'af))
-
 (defnode do-exp
   ('do exp '-> stms 'od)
   do)
+
+(def fa (ast toks scope)
+  (let (((nil i) start end) toks scope) (chain (list nil toks scope) 'fa id ':= exp 'to exp '->)
+    (let scope create-scope.scope
+      (= (scope.0.0 i) '(int))
+      (let (body toks scope) (chain (list nil toks scope) stms 'af)
+        (list (append ast (list 'fa i start end body)) toks cdr.scope)))))
+
 
 (def if-rest (ast toks scope)
   (chain (list ast toks scope) '|[]| (? 'else 'else exp) '-> stms (? '|[]| if-rest)))
