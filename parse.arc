@@ -20,6 +20,10 @@
 (def lookup-proc (proc scope)
   (lookup-scope proc [_.0 2] scope))
 
+(def create-scope (scope (o vars (table)) (o types (table)) (o procs (table)))
+  (cons (list vars types procs)
+        scope))
+
 (def append (xs x)
   (join xs list.x))
 
