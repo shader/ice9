@@ -5,6 +5,39 @@
    first!stm (join first!exp '(if do fa break exit writes write return |;|))
    exp-toks (join first!exp '(+ - * / % = != > < >= <= |,| |)|)))
 
+(def append (xs x)
+  (join xs list.x))
+
+(mac erp (x)
+  (w/uniq (gx)
+    `(let ,gx ,x
+       (w/stdout (stderr)
+         (pr ',x ": ") (write ,gx) (prn))
+       ,gx)))
+
+(mac implicit (name (o val))
+  `(defvar ,name ($.make-parameter ,val)))
+
+(mac w/param (name val . body)
+     (w/uniq (param f v) 
+       `(with (,f (fn () ,@body)
+               ,param (defvar-impl ,name)
+               ,v ,val)
+          ($ (parameterize ((,param ,v)) (,f))))))
+
+(def dups (xs)
+  ((afn ((x . xs) acc)
+        (if no.x rev.acc
+            (do (and (find x xs) (no:find x acc)
+                     (push x acc))
+                (self xs acc))))
+   xs nil))
+
+(def but-last (xs)
+  (rev:cdr:rev xs))
+
+(implicit in-loop)
+
 (def lookup-scope (item f scope)
   (aif no.scope nil
        (f.scope item)
@@ -24,29 +57,8 @@
   (cons (list vars types procs)
         scope))
 
-(def append (xs x)
-  (join xs list.x))
-
-(mac erp (x)
-  (w/uniq (gx)
-    `(let ,gx ,x
-       (w/stdout (stderr)
-         (pr ',x ": ") (write ,gx) (prn))
-       ,gx)))
-
 (def values (xs)
   (map cadr xs))
-
-(def dups (xs)
-  ((afn ((x . xs) acc)
-        (if no.x rev.acc
-            (do (and (find x xs) (no:find x acc)
-                     (push x acc))
-                (self xs acc))))
-   xs nil))
-
-(def but-last (xs)
-  (rev:cdr:rev xs))
 
 (def chain (args . fns)
   ((afn (fns args)
@@ -146,10 +158,13 @@
        (let (i v) x
             (list (append ast (list 'assign i v)) toks scope))))
 
-(mac defnode (name body (o sym name))
+(mac defnode (name body (o sym name) (o loop))
      `(def ,name (ast toks scope)
-        (let (x toks scope) (chain (list nil toks scope) ,@body)
-             (list (append ast (cons ',sym x)) toks scope))))
+        ,([if loop
+              `(w/param in-loop t ,_)
+              _]             
+          `(let (x toks scope) (chain (list nil toks scope) ,@body)
+                (list (append ast (cons ',sym x)) toks scope)))))
 
 (defnode write-exp
   ('write exp '|;|)
@@ -157,9 +172,6 @@
 
 (defnode writes
   ('writes exp '|;|))
-
-(defnode break
-  ('break '|;|))
 
 (defnode exit
   ('exit '|;|))
@@ -173,14 +185,23 @@
 
 (defnode do-exp
   ('do exp '-> stms 'od)
-  do)
+  do
+  t)
+
+(def break (ast toks scope)
+  (if in-loop
+      (let (x toks scope) (chain (list nil toks scope) 'break '|;|)
+           (list (append ast (cons 'break x)) toks scope))
+      (err:string "break is only permitted inside a loop")))
+
 
 (def fa (ast toks scope)
-  (let (((nil i) start end) toks scope) (chain (list nil toks scope) 'fa id ':= exp 'to exp '->)
-    (let scope create-scope.scope
-      (= (scope.0.0 i) '(int))
-      (let (body toks scope) (chain (list nil toks scope) stms 'af)
-        (list (append ast (list 'fa i start end body)) toks cdr.scope)))))
+  (w/param in-loop t
+    (let (((nil i) start end) toks scope) (chain (list nil toks scope) 'fa id ':= exp 'to exp '->)
+         (let scope create-scope.scope
+           (= (scope.0.0 i) '(int))
+           (let (body toks scope) (chain (list nil toks scope) stms 'af)
+                (list (append ast (list 'fa i start end body)) toks cdr.scope))))))
 
 
 (def if-rest (ast toks scope)
