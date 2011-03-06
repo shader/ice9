@@ -296,22 +296,27 @@
   (let (typ toks scope) (chain (list nil toks scope) typeid (? '|[| typearray))
        (list (append ast typ) toks scope)))
 
-(def forward (ast toks scope)
-  (let ((i parms typ) toks scope) (chain (list nil toks scope) 'forward id '|(| declist '|)| proctype '|;|)
-       prn.parms
-       (list ast toks (defproc i parms typ scope))))
-
-(def defproc (name parms typ scope)
+(def get-parms (xs scope)
   (let parms (apply join (map (fn (xs)
-                    (map (fn (x)
-                             (list x (lookup-type last.xs scope)))
-                         (values:rev:cdr:rev xs)))
-                parms))
+                                  (map (fn (x)
+                                           (list x (lookup-type last.xs scope)))
+                                       (values:rev:cdr:rev xs)))
+                              xs))
     (aif (dups (map car parms))
          (err:string "line " name.2 ": Duplicate procedure variable: " car.it))
-    (= (scope.0.2 name.1)
-       (cons typ parms))
-    scope))
+    parms))
+
+(def defproc (name parms typ scope)
+  (let parms ([if typ 
+                  (cons (list name list.typ) _)
+                  _]
+              (get-parms parms scope))
+       (= (scope.0.2 name)
+          (cons typ parms))
+       (let scope create-scope.scope
+         (each p parms
+               (= (scope.0.0 p.0) p.1))
+         scope)))
 
 (def declist (ast toks scope)
   (let (d toks nil)
