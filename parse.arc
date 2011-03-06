@@ -9,7 +9,7 @@
   (aif no.scope nil
        (f.scope item)
        it
-       (lookup-type item cdr.scope)))
+       (lookup-scope item f cdr.scope)))
 
 (def lookup-var (var scope)
   (lookup-scope var [_.0 0] scope))
