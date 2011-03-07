@@ -40,7 +40,9 @@
              (isa car.fns 'fn)
                (self cdr.fns (apply car.fns args))
              (isa car.fns 'sym)
-               (self cdr.fns (apply (expect car.fns) args))))
+               (self cdr.fns (apply (expect car.fns) args))
+             (acons car.fns)
+               (self cdr.fns (apply chain args car.fns))))
    fns args))
 
 (def parse-err (f toks)
@@ -57,7 +59,8 @@
 
 (def ? (sym (o exp sym) (o else list))
   (fn (ast toks scope . typ)
-      (([if (isa _ 'fn)
+      (([if (or acons._ 
+                (isa _ 'fn))
             _
             expect._]
         (if (or (and first.sym
@@ -71,7 +74,7 @@
   (fn (ast toks scope tp)
       (if (iso tp typ)
           (list ast toks typ scope)
-          (err:string "Expected expression of type " typ " but received " tp))))
+          (err:tostring:pr "Expected expression of type " typ " but received " tp))))
 
 (def parse (s)
   (let toks lex.s
@@ -151,11 +154,15 @@
   ('return '|;|))
 
 (defnode if-exp
-  ('if exp '-> stms (? '|[]| if-rest) 'fi)
+  ('if exp (T '(bool)) '-> stms (? '|[]| if-rest) 'fi)
   if)
 
+(def if-rest (ast toks scope)
+  (chain (list ast toks scope) '|[]| (? 'else 'else (list exp (T '(bool)))) 
+         '-> stms (? '|[]| if-rest)))
+
 (defnode do-exp
-  ('do exp '-> stms 'od)
+  ('do exp (T '(bool)) '-> stms 'od)
   do
   t)
 
@@ -168,15 +175,11 @@
 
 (def fa (ast toks scope)
   (w/param in-loop t
-    (let (((nil i) start end) toks scope) (chain (list nil toks scope) 'fa id ':= exp 'to exp '->)
+    (let (((nil i) start end) toks scope) (chain (list nil toks scope) 'fa id ':= exp (T '(int)) 'to exp (T '(int)) '->)
          (let scope create-scope.scope
            (= (scope.0.0 i) '(int))
            (let (body toks scope) (chain (list nil toks scope) stms 'af)
                 (list (append ast (list 'fa i start end body)) toks cdr.scope))))))
-
-
-(def if-rest (ast toks scope)
-  (chain (list ast toks scope) '|[]| (? 'else 'else exp) '-> stms (? '|[]| if-rest)))
 
 (def exp-primary (ast toks scope)
   (aif (find caar.toks first!exp)
@@ -216,13 +219,11 @@
 
 (mac exp-helper (name symbols next)
      `(def ,name (ast toks scope)
-          (aif (find caar.toks ',symbols)
-                (,name (append (rev:cdr:rev ast) (list it last.ast)) cdr.toks scope)
-                (let (x toks scope) (,next nil toks scope)
-                     (= ast (append (rev:cdr:rev ast) ((if last.ast append join) last.ast car.x)))
-                     (if (find caar.toks ',symbols)
-                         (,name ast toks scope)
-                         (list ast toks scope))))))
+        (let (x toks scope) (,next nil toks scope)
+             (= ast (append but-last.ast ((if last.ast append join) last.ast car.x)))
+             (aif (find caar.toks ',symbols)
+                  (,name (append but-last.ast (list it last.ast)) cdr.toks scope)
+                  (list ast toks scope)))))
 
 (exp-helper exp-term (* / %) exp-unary)
 
@@ -332,7 +333,7 @@
   (let (ds toks scope) (chain (list nil toks scope) 'var varlist '|;|)
        (each d ds
              (let typ last.d
-               (each var (rev:cdr:rev d)
+               (each var but-last.d
                      (if acons.var
                          (if (scope.0.0 var.1)
                              (err:string "Duplicate declaration: " var.1)
@@ -354,7 +355,7 @@
   (let parms (apply join (map (fn (xs)
                                   (map (fn (x)
                                            (list x (lookup-type last.xs scope)))
-                                       (values:rev:cdr:rev xs)))
+                                       (values:but-last xs)))
                               xs))
     (aif (dups (map car parms))
          (err:string "line " name.2 ": Duplicate procedure variable: " car.it))
@@ -422,7 +423,7 @@
 (mac terminal (name (o typ name))
      `(def ,name (ast toks scope)
         (if (is caar.toks ',typ)
-            (list (append ast (rev:cdr:rev pop.toks)) toks scope)
+            (list (append ast (but-last pop.toks)) toks scope)
             (parse-err ',typ toks))))
 
 (terminal id)
