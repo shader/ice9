@@ -287,8 +287,9 @@
      (append ast d) toks scope)))
 
 (def vartype (ast toks scope)
-  (let (typ toks scope) (chain (list nil toks scope) typeid (? '|[| typearray))
-       (list (append ast typ) toks scope)))
+  (let ((n . ds) toks scope) (chain (list nil toks scope) typeid (? '|[| typearray))
+       (let tp (lookup-type n scope)
+         (list (append ast (join (list car.tp) ds cdr.tp)) toks scope))))
 
 (def get-parms (xs scope)
   (let parms (apply join (map (fn (xs)
