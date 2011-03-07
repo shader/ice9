@@ -44,9 +44,11 @@
 
 (def ? (sym (o exp sym) (o else list))
   (fn (ast toks scope . typ)
-      (([if (or acons._ 
-                (isa _ 'fn))
+      (([if (isa _ 'fn)
             _
+            acons._
+            (fn args
+                (apply chain args _))
             expect._]
         (if (or (and first.sym
                      (find caar.toks first.sym))
