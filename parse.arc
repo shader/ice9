@@ -5,8 +5,7 @@
    first!exp '(id int true false string read - ? |(|)
    first!stm (join first!exp '(if do fa break exit writes write return |;|))
    exp-toks (join first!exp '(+ - * / % = != > < >= <= |,| |)|))
-   binops* (table)
-   unops* (table))
+   ops* (table))
 
 (implicit in-loop)
 
@@ -50,14 +49,14 @@
            (string "Expected " f " but reached unexpected end of input."))))
 
 (def expect (s)
-  (fn (ast toks scope)
+  (fn (ast toks scope . typ)
       (aif (is caar.toks s)
            pop.toks
            (parse-err s toks))
       (list ast toks scope)))
 
 (def ? (sym (o exp sym) (o else list))
-  (fn (ast toks scope)
+  (fn (ast toks scope . typ)
       (([if (isa _ 'fn)
             _
             expect._]
@@ -240,14 +239,14 @@
      (each n ([if acons._ _ list._] names)
            (map (fn (typ) 
                     (zap [cons (maptree list typ) _] 
-                         ((if (acons typ.0) binops* unops*)
-                          n)))
+                         ops*.n))
                 pair.types)))
 
 (op - 
-    int int
-    bool bool)
-(op ? bool int)
+    (int) int
+    (bool) bool)
+(op ?
+    (bool) int)
 (op (- /)
     (int int) int)
 (op (+ *)
@@ -260,8 +259,7 @@
     (int int) bool)
 
 (def check-op (x scope)
-  (withs (types ([aif cddr.x binops*._
-                      unops*._ it
+  (withs (types ([aif ops*._ it
                       (err:string "Op not defined: " _)]
                  car.x)
           tps (map [exp-type _ scope]
