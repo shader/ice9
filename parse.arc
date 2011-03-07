@@ -182,11 +182,11 @@
 (def exp-primary (ast toks scope)
   (aif (find caar.toks first!exp)
        ((case it
-          id exp-id 
+          id exp-id
           int integer
-          true true 
-          false false 
-          string str 
+          true true
+          false false
+          string str
           read ice-read
           |(| (fn args (chain args '|(| exp '|)|)))
         ast toks scope)
