@@ -245,7 +245,7 @@
 (mac op (names . types)
      (each n ([if acons._ _ list._] names)
            (map (fn (typ) 
-                    (zap [cons typ _] 
+                    (zap [cons (maptree list typ) _] 
                          ((if (acons typ.0) binops* unops*)
                           n)))
                 pair.types)))
@@ -267,23 +267,22 @@
 
 (def check-op (x scope)
   (withs (types ([aif cddr.x binops*._
-                     unops*._ it
-                     (err:string "Op not defined: " _)]
-                car.x)
+                      unops*._ it
+                      (err:string "Op not defined: " _)]
+                 car.x)
           tps (map [exp-type _ scope]
-                   cdr.x)
-          tps (if cdr.tps tps car.tps))
+                   cdr.x))
     (aif (find tps (map car types))
          (alref types it)
          (err:tostring:pr "Incorrect argument types for op " car.x ": " tps))))
 
 (def exp-type (x scope)
   (case car.x
-    int 'int
-    string 'string
-    true 'bool
-    false 'bool
-    read 'int
+    int '(int)
+    string '(string)
+    true '(bool)
+    false '(bool)
+    read '(int)
     ((case car.x
        var var 
        call call
@@ -291,14 +290,19 @@
      x scope)))
 
 (def call (x scope)
-  )
+  (aif (lookup-proc x.1 scope)
+       (let types (map [exp-type _ scope] cddr.x)
+         (if (iso types (map cadr cdr.it))
+             (list car.it)
+             (err:tostring:pr "Incorrect arguments in call to " x.1 ": " cddr.x)))
+       (err:string "Undefined procedure: " x.1)))
 
 (def var (x scope)
   (aif (lookup-var x.1 scope)
        (let typ (join (list car.it) (nthcdr (len cdr.x) it))
-         (if (> len.typ 1)
-             typ
-             car.typ))
+         (if (> (len cddr.x) (len cdr.it))
+             (err:string "Too many dimensions for variable " x.1 ": " (len cddr.x))
+             typ))
        (err:string "Undefined variable: " x.1)))
 
 (def exp-call (ast toks scope)
@@ -365,16 +369,16 @@
     parms))
 
 (def defproc (name parms typ scope)
-  (let parms ([if typ 
-                  (cons (list name list.typ) _)
-                  _]
-              (get-parms parms scope))
-       (= (scope.0.2 name)
-          (cons typ parms))
-       (let scope create-scope.scope
-         (each p parms
-               (= (scope.0.0 p.0) p.1))
-         scope)))
+  (let parms (get-parms parms scope)
+    (= (scope.0.2 name)
+       (cons typ parms))
+    (let scope create-scope.scope
+      (each p ([if typ
+                   (cons (list name list.typ) _)
+                   _]
+               parms)
+            (= (scope.0.0 p.0) p.1))
+      scope)))
 
 (def declist (ast toks scope)
   (let (d toks nil)
