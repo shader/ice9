@@ -69,7 +69,7 @@
        ast toks scope)))
 
 (def T (typ)
-  (fn (ast toks tp scope)
+  (fn (ast toks scope tp)
       (if (iso tp typ)
           (list ast toks typ scope)
           (err:string "Expected expression of type " typ " but received " tp))))
