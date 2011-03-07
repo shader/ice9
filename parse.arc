@@ -203,7 +203,6 @@
 
 (def lvalue (ast toks scope)
   (let ((v . dims) toks scop) (chain (list nil toks scope) id (? '|[| lvalue-rest))
-       (check-var v dims scope)
        (list (list:join (list 'var v.1) dims) toks scope)))
 
 (def lvalue-rest (ast toks scope)
@@ -214,7 +213,6 @@
        (if (> len.dims (- len.it 1))
            (err:string "Invalid dimension for variable " v.1))
        (err:string "Undeclared variable " v.1)))
-
 
 (def exp-unary (ast toks scope)
   (let (x toks scope) 
