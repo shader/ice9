@@ -28,3 +28,10 @@
 
 (def but-last (xs)
   (rev:cdr:rev xs))
+
+(def maptree (f tree)
+  (if no.tree nil
+      atom.tree f.tree
+      (cons (maptree f car.tree)
+            (maptree f cdr.tree))))
+
