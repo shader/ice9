@@ -238,7 +238,65 @@
 (exp-helper exp-main (= != > < >= <=) exp-factor)
 
 (def exp (ast toks scope)
-  (exp-main (append ast nil) toks scope))
+  (let ((x) toks scope) (exp-main nil toks scope)
+    (let typ (exp-type x scope)
+      (list (append ast x) toks scope))))
+
+(mac op (names . types)
+     (each n ([if acons._ _ list._] names)
+           (map (fn (typ) 
+                    (zap [cons typ _] 
+                         ((if (acons typ.0) binops* unops*)
+                          n)))
+                pair.types)))
+
+(op - 
+    int int
+    bool bool)
+(op ? bool int)
+(op (- /)
+    (int int) int)
+(op (+ *)
+    (int int) int
+    (bool bool) bool)
+(op (= !=)
+    (int int) bool
+    (bool bool) bool)
+(op (> < >= <=)
+    (int int) bool)
+
+(def check-op (x scope)
+  (withs (types ([aif cddr.x binops*._
+                     unops*._ it
+                     (err:string "Op not defined: " _)]
+                car.x)
+          tps (map [exp-type _ scope]
+                   cdr.x)
+          tps (if cdr.tps tps car.tps))
+    (aif (find tps (map car types))
+         (alref types it)
+         (err:tostring:pr "Incorrect argument types for op " car.x ": " tps))))
+
+(def exp-type (x scope)
+  (case car.x
+    int 'int
+    string 'string
+    true 'bool
+    false 'bool
+    read 'int
+    ((case car.x
+       var var 
+       call call
+       check-op)
+     x scope)))
+
+(def call (x scope)
+  )
+
+(def var (x scope)
+  (aif (lookup-var x.1 scope)
+       it
+       (err:string "Undefined variable: " x.1)))p
 
 (def exp-call (ast toks scope)
   (withs ((i toks scope) (id ast toks scope)
