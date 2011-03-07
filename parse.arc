@@ -302,12 +302,12 @@
   (withs ((i toks scope) (id ast toks scope)
           p i.0.1)
        (aif (lookup-proc p scope)
-            (let (x toks scope) (chain (list (list:list 'call (list p it)) toks scope) '|(| (? 'exp exp-list) '|)|)
-                 (list (join ast x) toks scope))
+            (let (x toks scope) (chain (list (list 'call p) toks scope) '|(| (? 'exp exp-list) '|)|)
+                 (list (append ast x) toks scope))
             (err:string "Undefined procedure: " p))))
 
 (def exp-list (ast toks scope)
-  (chain (list ast toks scope) (? '|,| '|,|) exp (? '|,| exp-list)))
+  (chain (list ast toks scope) (? '|,|) exp (? '|,| exp-list)))
 
 (def typedef (ast toks scope)
   (let ((id typ . dims) toks) (chain (list nil toks scope) 'type id '= typeid (? '|[| typearray) '|;|)
@@ -431,3 +431,4 @@
 (terminal str string)
 (terminal true)
 (terminal false)
+(terminal ice-read read)
