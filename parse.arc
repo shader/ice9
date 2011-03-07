@@ -295,8 +295,11 @@
 
 (def var (x scope)
   (aif (lookup-var x.1 scope)
-       it
-       (err:string "Undefined variable: " x.1)))p
+       (let typ (join (list car.it) (nthcdr (len cdr.x) it))
+         (if (> len.typ 1)
+             typ
+             car.typ))
+       (err:string "Undefined variable: " x.1)))
 
 (def exp-call (ast toks scope)
   (withs ((i toks scope) (id ast toks scope)
