@@ -208,12 +208,6 @@
 (def lvalue-rest (ast toks scope)
   (chain (list ast toks scope) '|[| exp '|]| (? '|[| lvalue-rest)))
 
-(def check-var (v dims scope)
-  (aif (lookup-var v.1 scope)
-       (if (> len.dims (- len.it 1))
-           (err:string "Invalid dimension for variable " v.1))
-       (err:string "Undeclared variable " v.1)))
-
 (def exp-unary (ast toks scope)
   (let (x toks scope) 
     (aif (find caar.toks '(- ?))
@@ -240,7 +234,7 @@
 (def exp (ast toks scope)
   (let ((x) toks scope) (exp-main nil toks scope)
     (let typ (exp-type x scope)
-      (list (append ast x) toks scope))))
+      (list (append ast x) toks scope typ))))
 
 (mac op (names . types)
      (each n ([if acons._ _ list._] names)
