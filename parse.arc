@@ -65,10 +65,12 @@
 (def assignment (ast toks scope)
   (let (x toks scope) (chain (list nil toks scope) lvalue ':= exp)
        (let (i v) x
-            (with (ti (exp-type i scope)
-                   tv (exp-type v scope))
+            (with (ti (exp-type i scope toks)
+                   tv (exp-type v scope toks))
               (if (~iso ti tv)
-                  (err:tostring:pr "Invalid type in assignment to " i.1 ": " tv)))
+                  (compile-err toks "Invalid type in assignment to " i.1 ": " tv)
+                  (is in-loop i.1)
+                  (compile-err toks "Invalid assignment to loop variable: " i.1)))
             (list (append ast (list 'assign i v)) toks scope))))
 
 (mac defnode (name body (o sym name) (o loop))
