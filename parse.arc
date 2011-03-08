@@ -5,16 +5,18 @@
    first!exp '(id int true false string read - ? |(|)
    first!stm (join first!exp '(if do fa break exit writes write return |;|))
    exp-toks (join first!exp '(+ - * / % = != > < >= <= |,| |)|))
-   ops* (table))
+   ops* (table)
+   default-scope (list:list (table)
+                            (obj int '(int) string '(string) bool '(bool))
+                            (table)))
 
 (implicit in-loop)
 
 (def parse (s)
+  (= forwards* (table))
   (let toks lex.s
     (on-err [prn details._]
-            [program nil toks (list:list (table)
-                                         (obj int '(int) string '(string) bool '(bool))
-                                         (table))])))
+            [program nil toks create-scope.default-scope])))
 
 (def program (ast toks scope)
   (if toks
