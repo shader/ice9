@@ -58,5 +58,6 @@
         (if l
             (on-err [do (prn "line " i ": " details._) quit.1]
                     (fn () (self readline.s ++.i (join acc (map [join _ list.i] (get-toks l))))))
-            acc))
+            (do (= last-line i)
+                acc)))
    readline.s 0 nil))
