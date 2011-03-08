@@ -57,11 +57,11 @@
             else))
        ast toks scope)))
 
-(def T (typ)
+(def T types
   (fn (ast toks scope tp)
-      (if (iso tp typ)
-          (list ast toks typ scope)
-          (err:tostring:pr "Expected expression of type " typ " but received " tp))))
+      (if (find tp types)
+          (list ast toks scope)
+          (compile-err toks "Expected expression of type " types " but received " tp))))
 
 (def lookup-scope (item f scope)
   (aif no.scope nil
@@ -99,9 +99,20 @@
                (self cdr.fns (apply chain args car.fns))))
    fns args))
 
+(def compile-err (toks . m)
+  (with (l (if car.toks 
+               (last car.toks)
+               last-line)
+         m (apply tostring:pr m))
+    (err (if car.toks
+             (tostring:prn "line " l ": " m)))))
+
 (def parse-err (f toks)
-  (err (if car.toks
-           (tostring:prn "Error on line " (last car.toks) ": Expected " f ", but received \"" caar.toks "\"")
-           (string "Expected " f " but reached unexpected end of input."))))
+  (compile-err
+   toks
+   ([string "Expected " f " but received " _ " instead."]
+    (aif car.toks
+         it
+         "end of file"))))
 
 
