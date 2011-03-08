@@ -82,11 +82,11 @@
                 (list (append ast (cons ',sym x)) toks scope)))))
 
 (defnode write-exp
-  ('write exp '|;|)
+  ('write exp (T '(int) '(string)) '|;|)
   write)
 
 (defnode writes
-  ('writes exp '|;|))
+  ('writes exp (T '(int) '(string)) '|;|))
 
 (defnode exit
   ('exit '|;|))
@@ -99,7 +99,7 @@
   if)
 
 (def if-rest (ast toks scope)
-  (chain (list ast toks scope) 
+  (chain (list ast toks scope)
          '|[]|
          (? 'else 'else (list exp (T '(bool)))) 
          '-> stms (? '|[]| if-rest)))
@@ -113,14 +113,14 @@
   (if in-loop
       (let (x toks scope) (chain (list nil toks scope) 'break '|;|)
            (list (append ast (cons 'break x)) toks scope))
-      (err:string "break is only permitted inside a loop")))
+      (compile-err toks "Break is only permitted inside a loop")))
 
 
 (def fa (ast toks scope)
-  (w/param in-loop t
-    (let (((nil i) start end) toks scope) (chain (list nil toks scope) 'fa id ':= exp (T '(int)) 'to exp (T '(int)) '->)
-         (let scope create-scope.scope
-           (= (scope.0.0 i) '(int))
+  (let (((nil i) start end) toks scope) (chain (list nil toks scope) 'fa id ':= exp (T '(int)) 'to exp (T '(int)) '->)
+       (let scope create-scope.scope
+         (= (scope.0.0 i) '(int))
+         (w/param in-loop i
            (let (body toks scope) (chain (list nil toks scope) stms 'af)
                 (list (append ast (list 'fa i start end body)) toks cdr.scope))))))
 
