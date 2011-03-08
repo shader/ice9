@@ -33,7 +33,7 @@
       (list ast toks scope)))
 
 (def stms (ast toks scope)
-   (chain (list ast toks scope) stm (? 'stm stms)))
+  (chain (list ast toks scope) (? 'stm (list stm stms))))
 
 (def stm (ast toks scope)
   (aif (is caar.toks 'id)
@@ -151,7 +151,7 @@
        (list (list:join (list 'var v.1) dims) toks scope)))
 
 (def lvalue-rest (ast toks scope)
-  (chain (list ast toks scope) '|[| exp '|]| (? '|[| lvalue-rest)))
+  (chain (list ast toks scope) '|[| exp (T '(int)) '|]| (? '|[| lvalue-rest)))
 
 (def exp-unary (ast toks scope)
   (let (x toks scope) 
