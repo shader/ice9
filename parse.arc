@@ -176,7 +176,7 @@
 
 (def exp (ast toks scope)
   (let ((x) toks scope) (exp-main nil toks scope)
-    (let typ (exp-type x scope)
+    (let typ (exp-type x scope toks)
       (list (append ast x) toks scope typ))))
 
 (mac op (names . types)
@@ -202,17 +202,17 @@
 (op (> < >= <=)
     (int int) bool)
 
-(def check-op (x scope)
+(def check-op (x scope toks)
   (withs (types ([aif ops*._ it
-                      (err:string "Op not defined: " _)]
+                      (compile-err toks "Op not defined: " _)]
                  car.x)
-          tps (map [exp-type _ scope]
+          tps (map [exp-type _ scope toks]
                    cdr.x))
     (aif (find tps (map car types))
          (alref types it)
-         (err:tostring:pr "Incorrect argument types for op " car.x ": " tps))))
+         (compile-err toks "Incorrect argument types for op " car.x ": " tps))))
 
-(def exp-type (x scope)
+(def exp-type (x scope toks)
   (case car.x
     int '(int)
     string '(string)
@@ -223,23 +223,23 @@
        var var 
        call call
        check-op)
-     x scope)))
+     x scope toks)))
 
-(def call (x scope)
+(def call (x scope toks)
   (aif (lookup-proc x.1 scope)
-       (let types (map [exp-type _ scope] cddr.x)
+       (let types (map [exp-type _ scope toks] cddr.x)
          (if (iso types (map cadr cdr.it))
              (list car.it)
-             (err:tostring:pr "Incorrect arguments in call to " x.1 ": " cddr.x)))
-       (err:string "Undefined procedure: " x.1)))
+             (compile-err toks "Incorrect arguments in call to " x.1 ": " cddr.x)))
+       (compile-err toks "Undefined procedure: " x.1)))
 
-(def var (x scope)
+(def var (x scope toks)
   (aif (lookup-var x.1 scope)
        (let typ (join (list car.it) (nthcdr (len cdr.x) it))
          (if (> (len cddr.x) (len cdr.it))
-             (err:string "Too many dimensions for variable " x.1 ": " (len cddr.x))
+             (compile-err toks "Too many dimensions for variable " x.1 ": " (len cddr.x))
              typ))
-       (err:string "Undefined variable: " x.1)))
+       (compile-err toks "Undefined variable: " x.1)))
 
 (def exp-call (ast toks scope)
   (withs ((i toks scope) (id ast toks scope)
@@ -247,7 +247,7 @@
        (aif (lookup-proc p scope)
             (let (x toks scope) (chain (list (list 'call p) toks scope) '|(| (? 'exp exp-list) '|)|)
                  (list (append ast x) toks scope))
-            (err:string "Undefined procedure: " p))))
+            (compile-err toks "Undefined procedure: " p))))
 
 (def exp-list (ast toks scope)
   (chain (list ast toks scope) (? '|,|) exp (? '|,| exp-list)))
@@ -263,7 +263,7 @@
   (let (((nil typ l)) toks scope) (id nil toks scope)
     (if (lookup-type typ scope)
         (list (append ast typ) toks scope)
-        (err:string "Type " typ " is not defined on line " l "."))))
+        (compile-err toks "Type " typ " is not defined on line " l "."))))
 
 (def typearray (ast toks scope)
   (let (dim toks scope) (chain (list nil toks scope) '|[| integer '|]|)
@@ -279,7 +279,7 @@
                (each var but-last.d
                      (if acons.var
                          (if (scope.0.0 var.1)
-                             (err:string "Duplicate declaration: " var.1)
+                             (compile-err toks "Duplicate declaration: " var.1)
                              (= (scope.0.0 var.1) typ))))))
        (list ast toks scope)))
 
