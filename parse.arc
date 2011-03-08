@@ -295,23 +295,25 @@
        (let tp (lookup-type n scope)
          (list (append ast (join (list car.tp) ds cdr.tp)) toks scope))))
 
-(def get-parms (xs scope)
+(def get-parms (xs toks scope)
   (let parms (apply join (map (fn (xs)
                                   (map (fn (x)
                                            (list x (lookup-type last.xs scope)))
                                        (values:but-last xs)))
                               xs))
     (aif (dups (map car parms))
-         (err:string "line " name.2 ": Duplicate procedure variable: " car.it))
+         (compile-err toks "line " name.2 ": Duplicate procedure variable: " car.it))
     parms))
 
-(def defproc (name parms typ scope)
-  (let parms (get-parms parms scope)
+(def defproc (name parms typ toks scope)
+  (let parms (get-parms parms toks scope)
     (= (scope.0.2 name)
        (cons typ parms))
     (let scope create-scope.scope
       (each p ([if typ
-                   (cons (list name list.typ) _)
+                   (if (find name (map car _))
+                       (compile-err toks "Parameter conflicts with name in function: " name)
+                       (cons (list name list.typ) _))
                    _]
                parms)
             (= (scope.0.0 p.0) p.1))
@@ -334,15 +336,27 @@
 
 (def forward (ast toks scope)
   (let (((nil i) parms typ) toks scope) (chain (list nil toks scope) 'forward id '|(| declist '|)| proctype '|;|)
-       (list ast toks (cdr:defproc i parms typ scope))))
+       (if forwards*.i
+           (compile-err toks "Duplicate declaration of forward: " i)
+           (= forwards*.i t))
+       (list ast toks (cdr:defproc i parms typ toks scope))))
 
 (def proc (ast toks scope)
   (withs ((((nil i) plist typ) toks scope)
             (chain (list nil toks scope) 'proc id '|(| declist '|)| proctype)
-          parms (get-parms plist scope)
-          (body toks scope)
-            (chain (list nil toks (defproc i plist typ scope)) procbody 'end))
-    (list (append ast (list 'proc i typ parms body)) toks cdr.scope)))
+          parms (get-parms plist toks scope))
+    (aif forwards*.i
+         (if (iso (lookup-proc i scope)
+                  (lookup-proc i (defproc i plist typ toks create-scope.default-scope)))
+             (= forwards*.i nil)
+             (compile-err toks "Definition for procedure \"" i 
+                              "\" does not match forward type: "
+                              (lookup-proc i scope)))
+         (lookup-proc i scope)
+           (compile-err toks "Conflicting definition of procedure: " i))
+    (let (body toks scope)
+         (chain (list nil toks (defproc i plist typ toks scope)) procbody 'end)
+      (list (append ast (list 'proc i typ parms body)) toks cdr.scope))))
 
 (def proctype (ast toks scope)
   (if (is caar.toks ':)
