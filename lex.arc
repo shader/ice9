@@ -25,7 +25,7 @@
 
    special `(id        "^[A-Za-z][A-Za-z0-9_]*"  ,[sym _]
              int       "^[0-9]+"                 ,[coerce _ 'int]
-             string    "^\"[^\"\n]*\"|'[^'\n]*'" ,idfn
+             string    "(?:^\"[^\"\n]*\")|(?:^'[^'\n]*)'" ,idfn
              comment   "^\\#.*"                  nil
              space     "^[ \t]+"                 nil))
 
