@@ -33,7 +33,7 @@
       (list ast toks scope)))
 
 (def stms (ast toks scope)
-  (chain (list ast toks scope) (? 'stm (list stm stms))))
+  (chain (list ast toks scope) stm (? 'stm stms)))
 
 (def stm (ast toks scope)
   (aif (is caar.toks 'id)
@@ -105,7 +105,7 @@
          '-> stms (? '|[]| if-rest)))
 
 (defnode do-exp
-  ('do exp (T '(bool)) '-> stms 'od)
+  ('do exp (T '(bool)) '-> (? 'stm stms) 'od)
   do
   t)
 
@@ -121,7 +121,7 @@
        (let scope create-scope.scope
          (= (scope.0.0 i) '(int))
          (w/param in-loop i
-           (let (body toks scope) (chain (list nil toks scope) stms 'af)
+           (let (body toks scope) (chain (list nil toks scope) (? 'stm stms) 'af)
                 (list (append ast (list 'fa i start end body)) toks cdr.scope))))))
 
 (def exp-primary (ast toks scope)
@@ -191,7 +191,7 @@
     (bool) bool)
 (op ?
     (bool) int)
-(op (- /)
+(op (- / %)
     (int int) int)
 (op (+ *)
     (int int) int
@@ -302,7 +302,7 @@
                                        (values:but-last xs)))
                               xs))
     (aif (dups (map car parms))
-         (compile-err toks "line " name.2 ": Duplicate procedure variable: " car.it))
+         (compile-err toks  "Duplicate procedure variable: " car.it))
     parms))
 
 (def defproc (name parms typ toks scope)
@@ -336,7 +336,7 @@
 
 (def forward (ast toks scope)
   (let (((nil i) parms typ) toks scope) (chain (list nil toks scope) 'forward id '|(| declist '|)| proctype '|;|)
-       (if forwards*.i
+       (if (lookup-proc i scope)
            (compile-err toks "Duplicate declaration of forward: " i)
            (= forwards*.i t))
        (list ast toks (cdr:defproc i parms typ toks scope))))

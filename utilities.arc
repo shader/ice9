@@ -104,15 +104,14 @@
                (last car.toks)
                last-line)
          m (apply tostring:pr m))
-    (err (if car.toks
-             (tostring:prn "line " l ": " m)))))
+    (err (tostring:prn "line " l ": " m))))
 
 (def parse-err (f toks)
   (compile-err
    toks
    ([string "Expected " f " but received " _ " instead."]
     (aif car.toks
-         it
+         car.it
          "end of file"))))
 
 
