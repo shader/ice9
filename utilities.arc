@@ -1,6 +1,9 @@
 (def append (xs x)
   (join xs list.x))
 
+(mac append-ast (x)
+     `(list (append ast ,x) toks scope))
+
 (mac erp (x)
   (w/uniq (gx)
     `(let ,gx ,x

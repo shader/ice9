@@ -16,6 +16,8 @@ exec $rl ./racket/bin/racket --no-init-file --repl --load "$0" ${1+"$@"}
 (aload "arc.arc")
 (aload "libs.arc")
 (current-directory "..")
+(aload "lex.arc")
+(aload "utilities.arc")
 (aload "parse.arc")
 #(arc-eval '(parse (lex (stdin)) rules))
 (tl)

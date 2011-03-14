@@ -1,6 +1,3 @@
-(load "lex.arc")
-(load "utilities.arc")
-
 (= first (table)
    first!exp '(id int true false string read - ? |(|)
    first!stm (join first!exp '(if do fa break exit writes write return |;|))
@@ -15,8 +12,7 @@
 (def parse (s)
   (= forwards* (table))
   (let toks lex.s
-    (on-err [prn details._]
-            [program nil toks create-scope.default-scope])))
+    (program nil toks create-scope.default-scope)))
 
 (def program (ast toks scope)
   (if toks
@@ -37,29 +33,27 @@
 
 (def stm (ast toks scope)
   (aif (is caar.toks 'id)
-       (stm-id ast toks scope)
+         (stm-id ast toks scope)
        (find caar.toks first!exp)
-       (chain (list ast toks scope) exp '|;|)
+         (chain (list ast toks scope) exp '|;|)
        (find caar.toks first!stm)
-       ((case it
-          if if-exp
-          do do-exp
-          fa fa
-          write write-exp
-          writes writes
-          break break
-          exit exit
-          return return
-          |;| (fn args (chain args '|;|)))
-        ast toks scope)
+         ((case it
+            if if-exp
+            do do-exp
+            fa fa
+            write write-exp
+            writes writes
+            break break
+            exit exit
+            return return
+            |;| (fn args (chain args '|;|)))
+          ast toks scope)
        (parse-err 'statement toks)))
 
 (def stm-id (ast toks scope)
-  (let (x (next . rest) scope) (lvalue ast toks scope)
+  (let (x toks scope) (lvalue ast toks scope)
        (chain (list ast toks scope)
-              (if (is car.next ':=)
-                  assignment
-                  exp)
+              (? ':= assignment exp)
               '|;|)))
 
 (def assignment (ast toks scope)
@@ -321,17 +315,17 @@
 
 (def declist (ast toks scope)
   (let (d toks nil)
-    ((if (is caar.toks '|)|)
-         list
-         declistx)
+    ((? '|)|
+        list
+        declistx)
      nil toks scope)
     (list (append ast d) toks scope)))
 
 (def declistx (ast toks scope)
   (let (d toks scope) (chain (list nil toks scope) (? '|,|) idlist ': typeid)
-    ((if (is caar.toks '|,|)
-         declistx
-         list)
+    ((? '|,|
+        declistx
+        list)
      (append ast d) toks scope)))
 
 (def forward (ast toks scope)
@@ -358,6 +352,10 @@
          (chain (list nil toks (defproc i plist typ toks scope)) procbody 'end)
       (list (append ast (list 'proc i typ parms body)) toks cdr.scope))))
 
+(= proctype (? ': (list ': typeid)
+                  (fn (ast toks scope)
+                      (list (append ast nil) toks scope))))
+
 (def proctype (ast toks scope)
   (if (is caar.toks ':)
       (chain (list ast toks scope) ': typeid)
@@ -365,9 +363,9 @@
 
 (def procbody (ast toks scope)
   (if (find caar.toks first!stm)
-      (stms ast toks scope)
+        (stms ast toks scope)
       (is caar.toks 'end)
-      (list ast toks scope)
+        (list ast toks scope)
       (let (ast toks scope)
         ((case caar.toks
            var vardef
@@ -376,7 +374,7 @@
         (procbody ast toks scope))))
 
 (def idlist (ast toks scope)
-  (chain (list ast toks scope) (? '|,|) id (? '|,| idlist)))
+  (chain (list ast toks scope) id (? '|,| (list '|,| idlist))))
 
 (mac terminal (name (o typ name))
      `(def ,name (ast toks scope)

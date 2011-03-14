@@ -56,7 +56,7 @@
   (if (isa s 'string) (= s instring.s))
   ((afn (l i acc)
         (if l
-            (on-err [do (prn "line " i ": " details._) quit.1]
+            (on-err [err:tostring:prn "line " i ": " details._]
                     (fn () (self readline.s ++.i (join acc (map [join _ list.i] (get-toks l))))))
             (do (= last-line i)
                 acc)))
