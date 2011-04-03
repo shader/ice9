@@ -51,10 +51,11 @@
        (parse-err 'statement toks)))
 
 (def stm-id (ast toks scope)
-  (let (x toks scope) (lvalue ast toks scope)
-       (chain (list ast toks scope)
-              (? ':= assignment exp)
-              '|;|)))
+  (let (_ rest scope) (lvalue ast toks scope)
+       ((if (is caar.rest ':=)
+            assignment
+            exp)
+        ast toks scope)))
 
 (def assignment (ast toks scope)
   (let (x toks scope) (chain (list nil toks scope) lvalue ':= exp)
@@ -65,7 +66,7 @@
                   (compile-err toks "Invalid type in assignment to " i.1 ": " tv)
                   (is in-loop i.1)
                   (compile-err toks "Invalid assignment to loop variable: " i.1)))
-            (list (append ast (list 'assign i v)) toks scope))))
+            (list (append ast (list ':= i v)) toks scope))))
 
 (mac defnode (name body (o sym name) (o loop))
      `(def ,name (ast toks scope)
@@ -157,9 +158,9 @@
 (mac exp-helper (name symbols next)
      `(def ,name (ast toks scope)
         (let (x toks scope) (,next nil toks scope)
-             (= ast (append but-last.ast ((if last.ast append join) last.ast car.x)))
+             (= ast (append butlast.ast ((if last.ast append join) last.ast car.x)))
              (aif (find caar.toks ',symbols)
-                  (,name (append but-last.ast (list it last.ast)) cdr.toks scope)
+                  (,name (append butlast.ast (list it last.ast)) cdr.toks scope)
                   (list ast toks scope)))))
 
 (exp-helper exp-term (* / %) exp-unary)
@@ -270,7 +271,7 @@
   (let (ds toks scope) (chain (list nil toks scope) 'var varlist '|;|)
        (each d ds
              (let typ last.d
-               (each var but-last.d
+               (each var butlast.d
                      (if acons.var
                          (if (scope.0.0 var.1)
                              (compile-err toks "Duplicate declaration: " var.1)
@@ -293,7 +294,7 @@
   (let parms (apply join (map (fn (xs)
                                   (map (fn (x)
                                            (list x (lookup-type last.xs scope)))
-                                       (values:but-last xs)))
+                                       (values:butlast xs)))
                               xs))
     (aif (dups (map car parms))
          (compile-err toks  "Duplicate procedure variable: " car.it))
@@ -376,10 +377,11 @@
 (def idlist (ast toks scope)
   (chain (list ast toks scope) id (? '|,| (list '|,| idlist))))
 
-(mac terminal (name (o typ name))
+(mac terminal (name (o typ name) . body)
      `(def ,name (ast toks scope)
         (if (is caar.toks ',typ)
-            (list (append ast (but-last pop.toks)) toks scope)
+            (do ,@body
+                (list (append ast (butlast pop.toks)) toks scope))
             (parse-err ',typ toks))))
 
 (terminal id)
