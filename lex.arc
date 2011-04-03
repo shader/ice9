@@ -23,9 +23,10 @@
              <
              %)
 
-   special `(id        "^[A-Za-z][A-Za-z0-9_]*"  ,[sym _]
-             int       "^[0-9]+"                 ,[coerce _ 'int]
-             string    "(?:^\"[^\"\n]*\")|(?:^'[^'\n]*)'" ,idfn
+   special `(id        "^[A-Za-z][A-Za-z0-9_]*"  ,[sym _.0]
+             int       "^[0-9]+"                 ,[coerce _.0 'int]
+             string    "(?:^\"([^\"\n]*)\")"     ,[_ 1]
+             string    "(?:^'([^'\n]*)')"        ,[_ 1]
              comment   "^\\#.*"                  nil
              space     "^[ \t]+"                 nil))
 
@@ -37,7 +38,7 @@
     (each sp (tuples special 3)
 	  (aif (re-match sp.1 s)
 	       (if (isa sp.2 'fn)
-		   (return (list car.sp (sp.2 car.it)))
+		   (return (list car.sp (sp.2 it)))
 		   (return (len car.it)))))))
 
 (def get-toks (s)
@@ -47,7 +48,9 @@
 	   (if no.tok (err:string "illegal character (" s.0 ")")
 	       (isa tok 'int) (self (cut s tok) acc)
                (self (cut s (aif cadr.tok
-                                 (len string.it)
+                                 (if (isa it 'string)
+                                     (+ len.it 2)
+                                     (len string.it))
                                  (len:string:car tok)))
                      (join acc list.tok))))))
    s))
