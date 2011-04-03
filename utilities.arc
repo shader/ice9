@@ -1,3 +1,8 @@
+(def listify (x)
+  (if (or no.x acons.x)
+      x
+      list.x))
+
 (def append (xs x)
   (join xs list.x))
 
@@ -14,6 +19,12 @@
 (mac implicit (name (o val))
   `(defvar ,name ($.make-parameter ,val)))
 
+(mac mapmac (m l)
+     (eval ``(do ,@(map [apply (rep ,m) _] ',l))))
+
+(mac onmac (m . l)
+  `(mapmac ,m ,l))
+
 (mac w/param (name val . body)
      (w/uniq (param f v) 
        `(with (,f (fn () ,@body)
@@ -28,9 +39,6 @@
                      (push x acc))
                 (self xs acc))))
    xs nil))
-
-(def but-last (xs)
-  (rev:cdr:rev xs))
 
 (def maptree (f tree)
   (if no.tree nil
@@ -117,4 +125,8 @@
          car.it
          "end of file"))))
 
-
+(mac w/lines (x form . body)
+  (w/uniq gv
+    `(let ,gv (instring:tostring ,form)
+       (let ,x (drain (readline ,gv))
+            ,@body))))
